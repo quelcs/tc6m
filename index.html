@@ -1,0 +1,1046 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>TC6M — DBM Fisioterapia</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{font-size:16px}
+body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#111827;min-height:100vh;overscroll-behavior:none}
+.bnav{position:sticky;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:50}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 12px;gap:3px;cursor:pointer;font-size:10px;color:#9ca3af;font-weight:500;border:none;background:none}
+.bnav-item.active{color:#1d4ed8}
+.bnav-dot{width:6px;height:6px;border-radius:50%;background:#e5e7eb;margin-bottom:1px}
+.bnav-item.done .bnav-dot{background:#16a34a}
+.bnav-item.active .bnav-dot{background:#1d4ed8}
+.bnav-icon{font-size:20px;line-height:1}
+.screen{display:none;padding:16px 16px 0}
+.screen.active{display:block}
+.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:40}
+.topbar-title{font-size:16px;font-weight:600;color:#111827;flex:1}
+.topbar-step{font-size:12px;color:#6b7280;background:#f3f4f6;padding:3px 10px;border-radius:99px}
+.card{background:#fff;border-radius:14px;border:1px solid #e5e7eb;padding:16px;margin-bottom:14px}
+.card-label{font-size:11px;font-weight:600;color:#6b7280;letter-spacing:.6px;text-transform:uppercase;margin-bottom:12px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:13px;font-weight:500;color:#374151;margin-bottom:6px}
+.field input,.field select,.field textarea{display:block;width:100%;font-size:16px;font-family:inherit;color:#111827;background:#f9fafb;border:1.5px solid #e5e7eb;border-radius:10px;padding:13px 14px;appearance:none;-webkit-appearance:none;transition:border-color .15s,background .15s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:#1d4ed8;background:#fff}
+.field textarea{min-height:90px;resize:none}
+.field .hint{font-size:12px;color:#9ca3af;margin-top:4px}
+.field-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.fc input{background:#f0fdf4!important;border-color:#86efac!important;color:#15803d!important;font-weight:600!important}
+.fr input{background:#eff6ff!important;border-color:#93c5fd!important;color:#1e40af!important;font-weight:700!important;font-size:18px!important}
+.fw input{background:#fffbeb!important;border-color:#fcd34d!important;color:#92400e!important;font-weight:600!important}
+.btn{display:block;width:100%;padding:16px;border-radius:12px;border:none;font-size:16px;font-weight:600;font-family:inherit;cursor:pointer;text-align:center;transition:opacity .1s,transform .1s}
+.btn:active{opacity:.85;transform:scale(.98)}
+.btn-primary{background:#1d4ed8;color:#fff}
+.btn-success{background:#16a34a;color:#fff}
+.btn-danger{background:#dc2626;color:#fff}
+.btn-outline{background:#fff;color:#1d4ed8;border:1.5px solid #1d4ed8}
+.btn-ghost{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.25)}
+.btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:4px}
+/* Timer */
+.timer-card{background:#111827;border-radius:18px;padding:28px 20px 24px;text-align:center;margin-bottom:14px}
+.timer-num{font-size:80px;font-weight:700;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-3px;line-height:1;margin-bottom:6px}
+.timer-num.running{color:#4ade80}
+.timer-num.warn{color:#fbbf24}
+.timer-num.done{color:#f87171}
+.timer-sub{font-size:13px;color:#6b7280;margin-bottom:22px}
+.timer-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.timer-mark-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.mark-chip{padding:12px;border-radius:10px;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.15);color:#fff;font-size:14px;font-weight:500;cursor:pointer;text-align:center;transition:background .1s}
+.mark-chip:active{background:rgba(255,255,255,.18)}
+.mark-chip.stop-active{background:rgba(220,38,38,.35);border-color:rgba(248,113,113,.6)}
+.timer-log{margin-top:12px;max-height:72px;overflow-y:auto;text-align:left}
+.timer-log-item{font-size:12px;color:#9ca3af;padding:3px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+/* Phys groups */
+.phys-group{border:1px solid #e5e7eb;border-radius:10px;overflow:hidden;margin-bottom:10px}
+.phys-group-title{background:#f9fafb;padding:10px 14px;font-size:13px;font-weight:600;color:#374151;border-bottom:1px solid #e5e7eb}
+.phys-cols{display:grid;grid-template-columns:repeat(3,1fr)}
+.phys-col{padding:10px 8px 12px;border-right:1px solid #e5e7eb}
+.phys-col:last-child{border-right:none}
+.phys-col-label{font-size:10px;color:#9ca3af;margin-bottom:6px;font-weight:500;text-align:center}
+.phys-col input{width:100%;border:1.5px solid #e5e7eb;border-radius:8px;padding:9px 4px;font-size:15px;text-align:center;background:#f9fafb;font-family:inherit;color:#111827}
+.phys-col input:focus{outline:none;border-color:#1d4ed8;background:#fff}
+.phys-row2{display:grid;grid-template-columns:repeat(3,1fr);border-top:1px solid #e5e7eb}
+.phys-row2 .phys-col{border-right:1px solid #e5e7eb}
+.phys-row2 .phys-col:last-child{border-right:none}
+.calc-col input{background:#f0fdf4!important;border-color:#86efac!important;color:#15803d!important;font-weight:600!important}
+.pct-col input{background:#eff6ff!important;border-color:#93c5fd!important;color:#1e40af!important;font-weight:600!important;font-size:13px!important}
+/* Result chips */
+.result-chips{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.result-chip{background:#f9fafb;border-radius:12px;border:1px solid #e5e7eb;padding:14px 12px;text-align:center}
+.result-chip .rc-label{font-size:11px;color:#6b7280;margin-bottom:4px}
+.result-chip .rc-val{font-size:26px;font-weight:700;color:#111827;line-height:1}
+.result-chip .rc-sub{font-size:11px;color:#9ca3af;margin-top:2px}
+.result-chip.good{background:#f0fdf4;border-color:#86efac}.result-chip.good .rc-val{color:#15803d}
+.result-chip.warn{background:#fffbeb;border-color:#fcd34d}.result-chip.warn .rc-val{color:#92400e}
+.result-chip.danger{background:#fef2f2;border-color:#fca5a5}.result-chip.danger .rc-val{color:#991b1b}
+/* Options */
+.opt-row{display:flex;align-items:flex-start;gap:12px;padding:14px;border:1.5px solid #e5e7eb;border-radius:12px;margin-bottom:10px;cursor:pointer;transition:border-color .15s,background .15s}
+.opt-row.selected{border-color:#1d4ed8;background:#eff6ff}
+.opt-radio{width:22px;height:22px;border-radius:50%;border:2px solid #d1d5db;margin-top:1px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.opt-row.selected .opt-radio{border-color:#1d4ed8;background:#1d4ed8}
+.opt-radio-dot{width:8px;height:8px;border-radius:50%;background:#fff;display:none}
+.opt-row.selected .opt-radio-dot{display:block}
+.opt-text{font-size:15px;color:#111827;font-weight:500}
+.opt-sub{font-size:12px;color:#6b7280;margin-top:2px}
+/* Alerts */
+.alert{padding:12px 14px;border-radius:10px;font-size:13px;margin-bottom:10px;line-height:1.5}
+.alert-ok{background:#f0fdf4;color:#15803d;border:1px solid #86efac}
+.alert-warn{background:#fffbeb;color:#92400e;border:1px solid #fcd34d}
+.alert-danger{background:#fef2f2;color:#991b1b;border:1px solid #fca5a5}
+.info-block{background:#f9fafb;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:14px}
+.spacer{height:20px}
+/* Report */
+.report-wrap{background:#fff;border-radius:14px;border:1px solid #e5e7eb;padding:20px;margin-bottom:14px}
+.r-inst{font-size:13px;font-weight:600;color:#374151;text-align:center}
+.r-title{font-size:15px;font-weight:700;color:#111827;text-align:center;margin:4px 0 2px}
+.r-date{font-size:12px;color:#9ca3af;text-align:center;margin-bottom:16px}
+.r-hr{border:none;border-top:2px solid #1d4ed8;margin-bottom:16px}
+.r-sec{font-size:10px;font-weight:700;color:#1d4ed8;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:10px;margin-top:18px}
+.r-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #f3f4f6;gap:8px}
+.r-row span:first-child{color:#6b7280;flex-shrink:0}
+.r-row span:last-child{font-weight:500;color:#111827;text-align:right}
+.r-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
+.r-table th{background:#f9fafb;padding:5px 3px;text-align:center;border:1px solid #e5e7eb;font-weight:600;color:#6b7280;font-size:10px}
+.r-table td{padding:5px 3px;border:1px solid #e5e7eb;text-align:center;color:#111827}
+.r-table td:first-child{text-align:left;font-weight:500;padding-left:6px}
+.cb{border-radius:10px;padding:12px 14px;margin-bottom:10px}
+.cb h4{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.cb p{font-size:13px;line-height:1.65}
+.cb.ok{background:#f0fdf4;border:1px solid #bbf7d0}.cb.ok h4{color:#15803d}.cb.ok p{color:#14532d}
+.cb.warn{background:#fffbeb;border:1px solid #fde68a}.cb.warn h4{color:#92400e}.cb.warn p{color:#78350f}
+.cb.danger{background:#fef2f2;border:1px solid #fecaca}.cb.danger h4{color:#991b1b}.cb.danger p{color:#7f1d1d}
+.cb.neutral{background:#f9fafb;border:1px solid #e5e7eb}.cb.neutral h4{color:#374151}.cb.neutral p{color:#1f2937;font-size:12px}
+.sig-block{margin-top:32px;text-align:center}
+.sig-line{width:200px;border-bottom:1px solid #111827;margin:0 auto 6px;height:36px}
+.sig-name{font-size:12px;color:#6b7280}
+.disclaimer{font-size:10px;color:#d1d5db;text-align:center;margin-top:16px}
+@media print{
+  .topbar,.bnav,.no-print{display:none!important}
+  body{background:#fff}
+  .screen{display:block!important;padding:0}
+  .report-wrap{border:none;padding:0}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <span style="font-size:22px">🫁</span>
+  <span class="topbar-title">TC6M — DBM Fisioterapia</span>
+  <span class="topbar-step" id="stepLabel">1 de 5</span>
+</div>
+
+<!-- ══ TELA 1: Paciente ══ -->
+<div class="screen active" id="s0">
+  <div class="card">
+    <div class="card-label">Dados do paciente</div>
+
+    <div class="field">
+      <label>Nome completo</label>
+      <input id="p_nome" type="text" placeholder="Nome do paciente" autocomplete="name">
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Nascimento</label>
+        <input id="p_dnasc" type="text" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric">
+        <div class="hint">dd/mm/aaaa</div>
+      </div>
+      <div class="field fc">
+        <label>Idade</label>
+        <input id="p_idade" type="text" readonly placeholder="—">
+        <div class="hint">calculada</div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Sexo</label>
+      <select id="p_sexo">
+        <option value="">Selecione</option>
+        <option value="M">Masculino</option>
+        <option value="F">Feminino</option>
+      </select>
+    </div>
+
+    <div class="field-row">
+      <div class="field">
+        <label>Peso (kg)</label>
+        <input id="p_peso" type="number" placeholder="70,0" step="0.1" inputmode="decimal">
+      </div>
+      <div class="field">
+        <label>Altura (m)</label>
+        <input id="p_altura" type="number" placeholder="1.70" step="0.01" min="0.5" max="2.5" inputmode="decimal">
+      </div>
+    </div>
+
+    <div class="field fc">
+      <label>IMC</label>
+      <input id="p_imc" type="text" readonly placeholder="—">
+      <div class="hint">kg/m² · calculado automaticamente</div>
+    </div>
+
+    <div class="field">
+      <label>Diagnóstico clínico</label>
+      <input id="p_diag" type="text" placeholder="Ex: DPOC, ICC, fibrose pulmonar">
+    </div>
+
+    <div class="field">
+      <label>Data do exame</label>
+      <input id="p_data" type="text" placeholder="dd/mm/aaaa" maxlength="10" inputmode="numeric">
+      <div class="hint">dd/mm/aaaa</div>
+    </div>
+  </div>
+  <button class="btn btn-primary no-print" onclick="goStep(1)">Próximo — Dados do teste</button>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ TELA 2: Teste ══ -->
+<div class="screen" id="s1">
+  <div class="timer-card">
+    <div class="timer-num" id="timerNum">6:00</div>
+    <div class="timer-sub" id="timerSub">Pronto para iniciar</div>
+    <div id="timerDist" style="font-size:15px;color:#4ade80;font-weight:600;margin-bottom:10px;display:none">0 m · 0 voltas</div>
+    <div class="timer-btns">
+      <button class="btn btn-success" id="btnStart" onclick="toggleTimer()">▶ Iniciar</button>
+      <button class="btn btn-ghost" onclick="resetTimer()">↺ Reiniciar</button>
+    </div>
+    <div class="timer-mark-row">
+      <div class="mark-chip" onclick="markLap()">📍 Volta</div>
+      <div class="mark-chip" id="chipStop" onclick="markStop()">⏸ Parada</div>
+    </div>
+    <div class="timer-log" id="timerLog"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Parâmetros fisiológicos</div>
+    <div style="font-size:12px;color:#9ca3af;margin-bottom:12px">Var.abs = após − antes &nbsp;|&nbsp; Var.% = variação relativa ao repouso</div>
+
+    <!-- FC -->
+    <div class="phys-group">
+      <div class="phys-group-title">Frequência Cardíaca (bpm)</div>
+      <div class="phys-cols">
+        <div class="phys-col"><div class="phys-col-label">Repouso</div><input id="fc_antes" type="number" placeholder="—" oninput="calcVars()"></div>
+        <div class="phys-col"><div class="phys-col-label">Nadir</div><input id="fc_nadir" type="number" placeholder="—"></div>
+        <div class="phys-col"><div class="phys-col-label">Após</div><input id="fc_apos" type="number" placeholder="—" oninput="calcVars()"></div>
+      </div>
+      <div class="phys-row2">
+        <div class="phys-col calc-col"><div class="phys-col-label">Var. abs.</div><input id="fc_var" type="text" readonly placeholder="—"></div>
+        <div class="phys-col pct-col"><div class="phys-col-label">Var. %</div><input id="fc_pct" type="text" readonly placeholder="—"></div>
+        <div class="phys-col"><div class="phys-col-label">Recup. 1min</div><input id="fc_rec" type="number" placeholder="—"></div>
+      </div>
+    </div>
+
+    <!-- SpO2 -->
+    <div class="phys-group">
+      <div class="phys-group-title">SpO₂ (%)</div>
+      <div class="phys-cols">
+        <div class="phys-col"><div class="phys-col-label">Repouso</div><input id="spo2_antes" type="number" placeholder="—" oninput="calcVars()"></div>
+        <div class="phys-col"><div class="phys-col-label">Nadir</div><input id="spo2_nadir" type="number" placeholder="—" oninput="calcVars()"></div>
+        <div class="phys-col"><div class="phys-col-label">Após</div><input id="spo2_apos" type="number" placeholder="—" oninput="calcVars()"></div>
+      </div>
+      <div class="phys-row2">
+        <div class="phys-col calc-col"><div class="phys-col-label">Var. abs. (pp)</div><input id="spo2_var" type="text" readonly placeholder="—"></div>
+        <div class="phys-col pct-col"><div class="phys-col-label">Var. %</div><input id="spo2_pct" type="text" readonly placeholder="—"></div>
+        <div class="phys-col"><div class="phys-col-label">Recup. 1min</div><input id="spo2_rec" type="number" placeholder="—"></div>
+      </div>
+    </div>
+
+    <!-- PA -->
+    <div class="phys-group">
+      <div class="phys-group-title">Pressão Arterial (mmHg)</div>
+      <div class="phys-cols">
+        <div class="phys-col"><div class="phys-col-label">Repouso</div><input id="pa_antes" type="text" placeholder="120/80" oninput="calcVars()"></div>
+        <div class="phys-col"><div class="phys-col-label">—</div><input type="text" disabled placeholder="N/A" style="opacity:.3"></div>
+        <div class="phys-col"><div class="phys-col-label">Após</div><input id="pa_apos" type="text" placeholder="120/80" oninput="calcVars()"></div>
+      </div>
+      <div class="phys-row2">
+        <div class="phys-col calc-col"><div class="phys-col-label">Var. abs.</div><input id="pa_var" type="text" readonly placeholder="—"></div>
+        <div class="phys-col pct-col"><div class="phys-col-label">Var. % sist.</div><input id="pa_pct" type="text" readonly placeholder="—"></div>
+        <div class="phys-col"><div class="phys-col-label">—</div><input type="text" disabled placeholder="N/A" style="opacity:.3"></div>
+      </div>
+    </div>
+
+    <!-- Borg dispneia -->
+    <div class="phys-group">
+      <div class="phys-group-title">Borg — Falta de ar (0–10)</div>
+      <div class="phys-cols">
+        <div class="phys-col"><div class="phys-col-label">Repouso</div><input id="bfa_antes" type="number" placeholder="—" min="0" max="10" step="0.5" oninput="calcVars()"></div>
+        <div class="phys-col"><div class="phys-col-label">—</div><input type="text" disabled placeholder="N/A" style="opacity:.3"></div>
+        <div class="phys-col"><div class="phys-col-label">Após</div><input id="bfa_apos" type="number" placeholder="—" min="0" max="10" step="0.5" oninput="calcVars()"></div>
+      </div>
+      <div class="phys-row2">
+        <div class="phys-col calc-col"><div class="phys-col-label">Var. abs.</div><input id="bfa_var" type="text" readonly placeholder="—"></div>
+        <div class="phys-col" style="border-right:1px solid #e5e7eb"><div class="phys-col-label">—</div><input type="text" disabled placeholder="—" style="opacity:.3"></div>
+        <div class="phys-col"><div class="phys-col-label">Recup. 1min</div><input id="bfa_rec" type="number" placeholder="—" min="0" max="10" step="0.5"></div>
+      </div>
+    </div>
+
+    <!-- Borg pernas -->
+    <div class="phys-group">
+      <div class="phys-group-title">Borg — Cansaço pernas (0–10)</div>
+      <div class="phys-cols">
+        <div class="phys-col"><div class="phys-col-label">Repouso</div><input id="bpe_antes" type="number" placeholder="—" min="0" max="10" step="0.5" oninput="calcVars()"></div>
+        <div class="phys-col"><div class="phys-col-label">—</div><input type="text" disabled placeholder="N/A" style="opacity:.3"></div>
+        <div class="phys-col"><div class="phys-col-label">Após</div><input id="bpe_apos" type="number" placeholder="—" min="0" max="10" step="0.5" oninput="calcVars()"></div>
+      </div>
+      <div class="phys-row2">
+        <div class="phys-col calc-col"><div class="phys-col-label">Var. abs.</div><input id="bpe_var" type="text" readonly placeholder="—"></div>
+        <div class="phys-col" style="border-right:1px solid #e5e7eb"><div class="phys-col-label">—</div><input type="text" disabled placeholder="—" style="opacity:.3"></div>
+        <div class="phys-col"><div class="phys-col-label">Recup. 1min</div><input id="bpe_rec" type="number" placeholder="—" min="0" max="10" step="0.5"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row no-print">
+    <button class="btn btn-outline" onclick="goStep(0)">← Voltar</button>
+    <button class="btn btn-primary" onclick="goStep(2)">Resultados →</button>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ TELA 3: Resultados ══ -->
+<div class="screen" id="s2">
+  <div class="card">
+    <div class="card-label">Desempenho funcional</div>
+    <div class="field">
+      <label>Distância percorrida</label>
+      <input id="dist_perc" type="number" placeholder="—" inputmode="numeric" oninput="calcResults()">
+      <div class="hint">preenchido automaticamente pelas voltas (30 m cada) · ajuste manual permitido</div>
+    </div>
+    <div class="field fc">
+      <label>Distância prevista — equação ATS (Enright &amp; Sherrill, 1998)</label>
+      <input id="dist_prev" type="text" readonly placeholder="—">
+      <div class="hint">calculada automaticamente com peso, altura, idade e sexo</div>
+    </div>
+    <div class="field fr">
+      <label>% do previsto alcançado</label>
+      <input id="pct_prev" type="text" readonly placeholder="—">
+    </div>
+    <div class="field-row">
+      <div class="field">
+        <label>N° de paradas</label>
+        <input id="n_paradas" type="number" placeholder="0" min="0" inputmode="numeric">
+      </div>
+      <div class="field fc">
+        <label>Tempo parado (cronômetro)</label>
+        <input id="t_paradas" type="text" readonly placeholder="0s">
+        <div class="hint">acumulado pelo app</div>
+      </div>
+    </div>
+    <div class="field">
+      <label>Motivo da parada</label>
+      <input id="motivo_parada" type="text" placeholder="Se houver">
+    </div>
+  </div>
+
+  <div id="alertArea"></div>
+
+  <div class="card">
+    <div class="card-label">Resumo visual</div>
+    <div class="result-chips">
+      <div class="result-chip" id="chip_dist">
+        <div class="rc-label">Distância</div>
+        <div class="rc-val" id="rv_dist">—</div>
+        <div class="rc-sub">metros</div>
+      </div>
+      <div class="result-chip" id="chip_pct">
+        <div class="rc-label">% do previsto</div>
+        <div class="rc-val" id="rv_pct">—</div>
+        <div class="rc-sub">capacidade funcional</div>
+      </div>
+      <div class="result-chip" id="chip_spo2">
+        <div class="rc-label">Queda SpO₂</div>
+        <div class="rc-val" id="rv_spo2">—</div>
+        <div class="rc-sub">repouso → nadir</div>
+      </div>
+      <div class="result-chip" id="chip_fc">
+        <div class="rc-label">Delta FC</div>
+        <div class="rc-val" id="rv_fc">—</div>
+        <div class="rc-sub">repouso → após</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="btn-row no-print">
+    <button class="btn btn-outline" onclick="goStep(1)">← Voltar</button>
+    <button class="btn btn-primary" onclick="goStep(3)">Conclusão →</button>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ TELA 4: Conclusão ══ -->
+<div class="screen" id="s3">
+  <div class="card">
+    <div class="card-label">Análise de desempenho</div>
+    <div id="optDesempenho">
+      <div class="opt-row" id="od_pres" onclick="selOpt('d','preservada',this)">
+        <div class="opt-radio"><div class="opt-radio-dot"></div></div>
+        <div><div class="opt-text">Capacidade funcional preservada</div><div class="opt-sub">≥ 80% do previsto</div></div>
+      </div>
+      <div class="opt-row" id="od_leve" onclick="selOpt('d','leve',this)">
+        <div class="opt-radio"><div class="opt-radio-dot"></div></div>
+        <div><div class="opt-text">Redução leve</div><div class="opt-sub">60–79% do previsto</div></div>
+      </div>
+      <div class="opt-row" id="od_mod" onclick="selOpt('d','moderada',this)">
+        <div class="opt-radio"><div class="opt-radio-dot"></div></div>
+        <div><div class="opt-text">Redução moderada</div><div class="opt-sub">40–59% do previsto</div></div>
+      </div>
+      <div class="opt-row" id="od_grav" onclick="selOpt('d','grave',this)">
+        <div class="opt-radio"><div class="opt-radio-dot"></div></div>
+        <div><div class="opt-text">Redução grave</div><div class="opt-sub">&lt; 40% do previsto</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Resposta oxigêmica</div>
+    <div class="opt-row" id="oo_sem" onclick="selOpt('o','sem',this)">
+      <div class="opt-radio"><div class="opt-radio-dot"></div></div>
+      <div><div class="opt-text">Sem queda significativa</div><div class="opt-sub">SpO₂ mantida (queda &lt; 4 pp)</div></div>
+    </div>
+    <div class="opt-row" id="oo_com" onclick="selOpt('o','com',this)">
+      <div class="opt-radio"><div class="opt-radio-dot"></div></div>
+      <div><div class="opt-text">Dessaturação ao esforço</div><div class="opt-sub">Queda de SpO₂ ≥ 4 pp (critério ATS)</div></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-label">Observações clínicas</div>
+    <div class="field">
+      <textarea id="obs_clinicas" placeholder="Intercorrências, uso de O₂ suplementar, condições do ambiente, limitações relatadas pelo paciente..."></textarea>
+    </div>
+    <div class="info-block">
+      <div style="font-size:11px;font-weight:600;color:#6b7280;letter-spacing:.5px;text-transform:uppercase;margin-bottom:8px">Responsável pelo exame</div>
+      <div style="font-size:15px;font-weight:600;color:#111827">Daniel Brandão Martins</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:2px">CREFITO 2: 125597-F</div>
+      <div style="border-top:1px solid #e5e7eb;margin:10px 0"></div>
+      <div style="font-size:14px;font-weight:600;color:#111827">DBM Fisioterapia Ltda</div>
+      <div style="font-size:13px;color:#6b7280;margin-top:2px">CNPJ: 59.240.405/0001-40</div>
+    </div>
+  </div>
+
+  <div class="btn-row no-print">
+    <button class="btn btn-outline" onclick="goStep(2)">← Voltar</button>
+    <button class="btn btn-success" onclick="buildReport();goStep(4)">Gerar laudo ✓</button>
+  </div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ TELA 5: Laudo ══ -->
+<div class="screen" id="s4">
+  <div class="btn-row no-print" style="margin-bottom:12px">
+    <button class="btn btn-outline" onclick="goStep(3)">← Editar</button>
+    <button class="btn btn-primary" onclick="window.print()">🖨 Imprimir</button>
+  </div>
+  <div class="report-wrap" id="reportOut"></div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ BOTTOM NAV ══ -->
+<nav class="bnav no-print">
+  <button class="bnav-item active" id="bn0" onclick="goStep(0)"><div class="bnav-dot"></div><span class="bnav-icon">👤</span><span>Paciente</span></button>
+  <button class="bnav-item" id="bn1" onclick="goStep(1)"><div class="bnav-dot"></div><span class="bnav-icon">⏱</span><span>Teste</span></button>
+  <button class="bnav-item" id="bn2" onclick="goStep(2)"><div class="bnav-dot"></div><span class="bnav-icon">📊</span><span>Resultados</span></button>
+  <button class="bnav-item" id="bn3" onclick="goStep(3)"><div class="bnav-dot"></div><span class="bnav-icon">🩺</span><span>Conclusão</span></button>
+  <button class="bnav-item" id="bn4" onclick="goStep(4)"><div class="bnav-dot"></div><span class="bnav-icon">📄</span><span>Laudo</span></button>
+</nav>
+
+<script>
+// ─── State ───────────────────────────────────────────
+let curStep = 0;
+let timerSec = 360;
+let timerRunning = false;
+let timerInt = null;
+let lapCount = 0;
+let stopCount = 0;
+let stopTotalMs = 0;       // total ms acumulado em paradas
+let stopStartMs = null;    // timestamp de início da parada atual
+let inStop = false;        // toggle state
+let dVal = null;
+let oVal = null;
+
+// ─── Navigation ──────────────────────────────────────
+function goStep(n) {
+  document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+  document.getElementById('s' + n).classList.add('active');
+  document.querySelectorAll('.bnav-item').forEach((el, i) => {
+    el.classList.remove('active');
+    if (i < n) el.classList.add('done'); else el.classList.remove('done');
+  });
+  document.getElementById('bn' + n).classList.add('active');
+  document.getElementById('stepLabel').textContent = (n + 1) + ' de 5';
+  curStep = n;
+  if (n === 2) { recalcPrev(); calcResults(); }
+  if (n === 3) autoSelectConclusoes();
+  window.scrollTo(0, 0);
+}
+
+// ─── Date mask dd/mm/aaaa ─────────────────────────────
+function applyDateMask(id, onChange) {
+  const el = document.getElementById(id);
+  el.addEventListener('input', function() {
+    let v = this.value.replace(/\D/g, '');
+    if (v.length > 2) v = v.slice(0,2) + '/' + v.slice(2);
+    if (v.length > 5) v = v.slice(0,5) + '/' + v.slice(5);
+    this.value = v.slice(0, 10);
+    if (onChange) onChange();
+  });
+}
+applyDateMask('p_dnasc', calcAge);
+applyDateMask('p_data', null);
+
+// Set today's date
+(function() {
+  const t = new Date();
+  const dd = String(t.getDate()).padStart(2,'0');
+  const mm = String(t.getMonth()+1).padStart(2,'0');
+  document.getElementById('p_data').value = dd+'/'+mm+'/'+t.getFullYear();
+})();
+
+// ─── Age from dd/mm/aaaa ──────────────────────────────
+function calcAge() {
+  const raw = document.getElementById('p_dnasc').value;
+  const parts = raw.split('/');
+  if (parts.length !== 3 || parts[2].length < 4) { document.getElementById('p_idade').value = ''; return; }
+  const d = new Date(+parts[2], +parts[1]-1, +parts[0]);
+  if (isNaN(d.getTime())) { document.getElementById('p_idade').value = ''; return; }
+  const today = new Date();
+  let age = today.getFullYear() - d.getFullYear();
+  if (today.getMonth() < d.getMonth() || (today.getMonth() === d.getMonth() && today.getDate() < d.getDate())) age--;
+  if (age >= 0 && age <= 120) {
+    document.getElementById('p_idade').value = age;
+    recalcPrev();
+  }
+}
+
+// ─── IMC ──────────────────────────────────────────────
+// Called on every change to peso or altura
+function calcIMC() {
+  const p = parseFloat(document.getElementById('p_peso').value);
+  const h = parseFloat(document.getElementById('p_altura').value);
+  const el = document.getElementById('p_imc');
+  if (p > 0 && h > 0.3) {
+    el.value = (p / (h * h)).toFixed(1);
+  } else {
+    el.value = '';
+  }
+}
+
+// Attach to both oninput AND onchange so iOS fires on blur too
+['p_peso','p_altura'].forEach(function(id) {
+  const el = document.getElementById(id);
+  el.addEventListener('input',  function(){ calcIMC(); recalcPrev(); });
+  el.addEventListener('change', function(){ calcIMC(); recalcPrev(); });
+});
+document.getElementById('p_sexo').addEventListener('change', recalcPrev);
+
+// ─── Predicted distance (ATS / Enright & Sherrill 1998) ──
+function recalcPrev() {
+  const peso  = parseFloat(document.getElementById('p_peso').value);
+  const alt   = parseFloat(document.getElementById('p_altura').value);
+  const idade = parseFloat(document.getElementById('p_idade').value);
+  const sexo  = document.getElementById('p_sexo').value;
+  const el    = document.getElementById('dist_prev');
+
+  if (isNaN(peso) || isNaN(alt) || alt < 0.5 || isNaN(idade) || !sexo) {
+    el.value = '';
+    return;
+  }
+  const altCm = alt * 100;
+  let prev = sexo === 'M'
+    ? 7.57*altCm - 5.02*idade - 1.76*peso - 309
+    : 2.11*altCm - 2.29*peso - 5.78*idade + 667;
+  prev = Math.max(0, Math.round(prev));
+  el.value = prev;
+  // update % if distance already entered
+  calcResults();
+}
+
+// ─── Signed helpers ───────────────────────────────────
+function signedAbs(a, b, dec) {
+  const d = b - a;
+  return (d >= 0 ? '+' : '') + d.toFixed(dec);
+}
+function signedPct(a, b) {
+  if (!a || a === 0) return '—';
+  const p = ((b - a) / Math.abs(a)) * 100;
+  return (p >= 0 ? '+' : '') + p.toFixed(1) + '%';
+}
+
+// ─── Variation calculation ────────────────────────────
+function calcVars() {
+  // FC
+  const fca = parseFloat(document.getElementById('fc_antes').value);
+  const fcb = parseFloat(document.getElementById('fc_apos').value);
+  if (!isNaN(fca) && !isNaN(fcb)) {
+    document.getElementById('fc_var').value = signedAbs(fca, fcb, 0) + ' bpm';
+    document.getElementById('fc_pct').value = signedPct(fca, fcb);
+  } else {
+    document.getElementById('fc_var').value = '';
+    document.getElementById('fc_pct').value = '';
+  }
+
+  // SpO2 (uses após vs repouso for the main var row; nadir captured separately)
+  const sa = parseFloat(document.getElementById('spo2_antes').value);
+  const sb = parseFloat(document.getElementById('spo2_apos').value);
+  if (!isNaN(sa) && !isNaN(sb)) {
+    document.getElementById('spo2_var').value = signedAbs(sa, sb, 1) + ' pp';
+    document.getElementById('spo2_pct').value = signedPct(sa, sb);
+  } else {
+    document.getElementById('spo2_var').value = '';
+    document.getElementById('spo2_pct').value = '';
+  }
+
+  // PA
+  const paa = document.getElementById('pa_antes').value;
+  const pab = document.getElementById('pa_apos').value;
+  if (paa && pab && paa.includes('/') && pab.includes('/')) {
+    try {
+      const [s1,d1] = paa.split('/').map(Number);
+      const [s2,d2] = pab.split('/').map(Number);
+      if (!isNaN(s1) && !isNaN(s2) && !isNaN(d1) && !isNaN(d2)) {
+        const ds = s2-s1, dd = d2-d1;
+        document.getElementById('pa_var').value = (ds>=0?'+':'')+ds+'/'+(dd>=0?'+':'')+dd+' mmHg';
+        document.getElementById('pa_pct').value = signedPct(s1, s2);
+      }
+    } catch(e) {}
+  } else {
+    document.getElementById('pa_var').value = '';
+    document.getElementById('pa_pct').value = '';
+  }
+
+  // Borg FA
+  const bfaa = parseFloat(document.getElementById('bfa_antes').value);
+  const bfab = parseFloat(document.getElementById('bfa_apos').value);
+  document.getElementById('bfa_var').value = (!isNaN(bfaa) && !isNaN(bfab)) ? signedAbs(bfaa, bfab, 1) : '';
+
+  // Borg PE
+  const bpea = parseFloat(document.getElementById('bpe_antes').value);
+  const bpeb = parseFloat(document.getElementById('bpe_apos').value);
+  document.getElementById('bpe_var').value = (!isNaN(bpea) && !isNaN(bpeb)) ? signedAbs(bpea, bpeb, 1) : '';
+}
+
+// ─── Results summary ──────────────────────────────────
+function calcResults() {
+  const dist = parseFloat(document.getElementById('dist_perc').value);
+  const prev = parseFloat(document.getElementById('dist_prev').value);
+
+  // % previsto
+  let pct = null;
+  if (!isNaN(dist) && !isNaN(prev) && prev > 0) {
+    pct = parseFloat((dist / prev * 100).toFixed(1));
+    document.getElementById('pct_prev').value = pct + '%';
+  } else {
+    document.getElementById('pct_prev').value = '';
+  }
+
+  // dist chip
+  document.getElementById('rv_dist').textContent = isNaN(dist) ? '—' : dist;
+
+  // pct chip
+  const chipPct = document.getElementById('chip_pct');
+  const rvPct   = document.getElementById('rv_pct');
+  if (pct !== null) {
+    rvPct.textContent = pct + '%';
+    chipPct.className = 'result-chip ' + (pct >= 80 ? 'good' : pct >= 60 ? 'warn' : 'danger');
+  } else { rvPct.textContent = '—'; chipPct.className = 'result-chip'; }
+
+  // SpO2 chip (repouso → nadir)
+  const spo2a = parseFloat(document.getElementById('spo2_antes').value);
+  const spo2n = parseFloat(document.getElementById('spo2_nadir').value);
+  const chipSpo = document.getElementById('chip_spo2');
+  const rvSpo   = document.getElementById('rv_spo2');
+  if (!isNaN(spo2a) && !isNaN(spo2n)) {
+    const drop = spo2a - spo2n;
+    rvSpo.textContent = (drop > 0 ? '−' : '+') + Math.abs(drop).toFixed(1) + ' pp';
+    chipSpo.className = 'result-chip ' + (drop >= 4 ? 'danger' : drop >= 2 ? 'warn' : 'good');
+  } else { rvSpo.textContent = '—'; chipSpo.className = 'result-chip'; }
+
+  // FC chip
+  const fca = parseFloat(document.getElementById('fc_antes').value);
+  const fcb = parseFloat(document.getElementById('fc_apos').value);
+  const rvFc = document.getElementById('rv_fc');
+  if (!isNaN(fca) && !isNaN(fcb)) {
+    const d = fcb - fca;
+    rvFc.textContent = (d >= 0 ? '+' : '') + d + ' bpm';
+  } else { rvFc.textContent = '—'; }
+
+  // alert banners
+  const alertArea = document.getElementById('alertArea');
+  alertArea.innerHTML = '';
+  if (pct !== null) {
+    let cls, msg;
+    if (pct >= 80)      { cls='alert-ok';     msg='✅ Distância dentro do esperado — capacidade funcional preservada (≥ 80% do previsto).'; }
+    else if (pct >= 60) { cls='alert-warn';   msg='⚠️ Redução leve da capacidade funcional (60–79% do previsto).'; }
+    else if (pct >= 40) { cls='alert-warn';   msg='⚠️ Redução moderada da capacidade funcional (40–59% do previsto).'; }
+    else                { cls='alert-danger'; msg='🔴 Redução grave da capacidade funcional (< 40% do previsto).'; }
+    alertArea.innerHTML += '<div class="alert ' + cls + '">' + msg + '</div>';
+  }
+  if (!isNaN(spo2a) && !isNaN(spo2n) && (spo2a - spo2n) >= 4) {
+    alertArea.innerHTML += '<div class="alert alert-danger">⚠️ Dessaturação induzida pelo esforço: queda de SpO₂ ≥ 4 pp (critério ATS positivo).</div>';
+  }
+}
+
+// ─── Auto-select conclusions ──────────────────────────
+function autoSelectConclusoes() {
+  // always recalc first so values are fresh
+  recalcPrev();
+  calcResults();
+
+  const pctRaw = document.getElementById('pct_prev').value;
+  const pct    = parseFloat(pctRaw);
+  if (!isNaN(pct)) autoSelDesempenho(pct);
+
+  const spo2a  = parseFloat(document.getElementById('spo2_antes').value);
+  const spo2n  = parseFloat(document.getElementById('spo2_nadir').value);
+  if (!isNaN(spo2a) && !isNaN(spo2n)) autoSelOxigenio((spo2a - spo2n) >= 4 ? 'com' : 'sem');
+}
+function autoSelDesempenho(pct) {
+  const map = { preservada:'od_pres', leve:'od_leve', moderada:'od_mod', grave:'od_grav' };
+  const val = pct >= 80 ? 'preservada' : pct >= 60 ? 'leve' : pct >= 40 ? 'moderada' : 'grave';
+  clearOpts('d'); dVal = val;
+  document.getElementById(map[val]).classList.add('selected');
+}
+function autoSelOxigenio(val) {
+  clearOpts('o'); oVal = val;
+  document.getElementById(val === 'sem' ? 'oo_sem' : 'oo_com').classList.add('selected');
+}
+function clearOpts(g) {
+  (g === 'd' ? ['od_pres','od_leve','od_mod','od_grav'] : ['oo_sem','oo_com'])
+    .forEach(id => document.getElementById(id).classList.remove('selected'));
+}
+function selOpt(g, val, el) {
+  clearOpts(g); el.classList.add('selected');
+  if (g === 'd') dVal = val; else oVal = val;
+}
+
+// ─── Timer ────────────────────────────────────────────
+function fmt(s) {
+  const m = Math.floor(s / 60);
+  return m + ':' + (s % 60 < 10 ? '0' : '') + (s % 60);
+}
+function fmtMs(ms) {
+  const s = Math.round(ms / 1000);
+  if (s < 60) return s + 's';
+  return Math.floor(s/60) + 'min ' + (s%60) + 's';
+}
+
+function toggleTimer() {
+  const btn = document.getElementById('btnStart');
+  if (!timerRunning) {
+    timerRunning = true;
+    btn.textContent = '⏸ Pausar'; btn.className = 'btn btn-danger';
+    document.getElementById('timerSub').textContent = 'Teste em andamento…';
+    timerInt = setInterval(function() {
+      timerSec--;
+      const el = document.getElementById('timerNum');
+      el.textContent = fmt(timerSec);
+      el.className = 'timer-num' + (timerSec <= 0 ? ' done' : timerSec <= 60 ? ' warn' : ' running');
+      if (timerSec <= 0) {
+        clearInterval(timerInt); timerRunning = false;
+        btn.textContent = '✅ Concluído'; btn.disabled = true; btn.className = 'btn btn-outline';
+        document.getElementById('timerSub').textContent = '✅ 6 minutos concluídos!';
+        // end any open stop
+        if (inStop) endStop();
+        beep();
+      }
+    }, 1000);
+  } else {
+    timerRunning = false; clearInterval(timerInt);
+    btn.textContent = '▶ Continuar'; btn.className = 'btn btn-success';
+    document.getElementById('timerSub').textContent = 'Pausado';
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInt); timerRunning = false; timerSec = 360;
+  lapCount = 0; stopCount = 0;
+  document.getElementById('dist_perc').value = '';
+  var td = document.getElementById('timerDist'); td.style.display='none'; td.textContent='0 m · 0 voltas'; stopTotalMs = 0; stopStartMs = null; inStop = false;
+  document.getElementById('timerNum').textContent = '6:00';
+  document.getElementById('timerNum').className = 'timer-num';
+  document.getElementById('timerSub').textContent = 'Pronto para iniciar';
+  document.getElementById('timerLog').innerHTML = '';
+  document.getElementById('n_paradas').value = '';
+  document.getElementById('t_paradas').value = '';
+  document.getElementById('chipStop').textContent = '⏸ Parada';
+  document.getElementById('chipStop').classList.remove('stop-active');
+  const btn = document.getElementById('btnStart');
+  btn.textContent = '▶ Iniciar'; btn.className = 'btn btn-success'; btn.disabled = false;
+}
+
+function markLap() {
+  lapCount++;
+  const elapsed = 360 - timerSec;
+  const distAuto = lapCount * 30;
+  const distEl = document.getElementById('dist_perc');
+  distEl.value = distAuto;
+  calcResults();
+  addLog('📍 Volta ' + lapCount + ' — ' + distAuto + ' m · ' + fmt(elapsed) + ' decorrido');
+  var td = document.getElementById('timerDist');
+  td.style.display = 'block';
+  td.textContent = distAuto + ' m · ' + lapCount + (lapCount === 1 ? ' volta' : ' voltas');
+}
+
+function markStop() {
+  if (!inStop) {
+    // BEGIN stop
+    inStop = true;
+    stopStartMs = Date.now();
+    stopCount++;
+    const elapsed = 360 - timerSec;
+    document.getElementById('chipStop').textContent = '▶ Retomar';
+    document.getElementById('chipStop').classList.add('stop-active');
+    addLog('⏸ Parada ' + stopCount + ' iniciada — ' + fmt(elapsed) + ' decorrido');
+    document.getElementById('n_paradas').value = stopCount;
+  } else {
+    endStop();
+  }
+}
+
+function endStop() {
+  if (!inStop || stopStartMs === null) return;
+  inStop = false;
+  const ms = Date.now() - stopStartMs;
+  stopTotalMs += ms;
+  stopStartMs = null;
+  document.getElementById('chipStop').textContent = '⏸ Parada';
+  document.getElementById('chipStop').classList.remove('stop-active');
+  document.getElementById('t_paradas').value = fmtMs(stopTotalMs);
+  addLog('▶ Retomada — parada durou ' + fmtMs(ms) + ' (total: ' + fmtMs(stopTotalMs) + ')');
+}
+
+function addLog(txt) {
+  const log = document.getElementById('timerLog');
+  const div = document.createElement('div');
+  div.className = 'timer-log-item'; div.textContent = txt;
+  log.appendChild(div); log.scrollTop = log.scrollHeight;
+}
+
+function beep() {
+  try {
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    [0, 0.4, 0.8].forEach(function(t) {
+      const o = ctx.createOscillator(), g2 = ctx.createGain();
+      o.connect(g2); g2.connect(ctx.destination);
+      o.frequency.value = 880;
+      g2.gain.setValueAtTime(0.4, ctx.currentTime + t);
+      g2.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + t + 0.35);
+      o.start(ctx.currentTime + t); o.stop(ctx.currentTime + t + 0.4);
+    });
+  } catch(e) {}
+}
+
+// ─── Report builder ───────────────────────────────────
+function gv(id) {
+  const el = document.getElementById(id);
+  if (!el) return '—';
+  const v = el.value ? el.value.trim() : '';
+  return v || '—';
+}
+
+function buildReport() {
+  // ensure all calcs are fresh
+  calcIMC();
+  recalcPrev();
+  calcResults();
+  calcVars();
+
+  const nome      = gv('p_nome');
+  const dnasc     = gv('p_dnasc');
+  const idade     = gv('p_idade');
+  const sexoRaw   = gv('p_sexo');
+  const sexo      = sexoRaw==='M' ? 'Masculino' : sexoRaw==='F' ? 'Feminino' : '—';
+  const peso      = gv('p_peso');
+  const alt       = gv('p_altura');
+  const imc       = gv('p_imc');
+  const diag      = gv('p_diag');
+  const dataExame = gv('p_data');
+
+  const fca=gv('fc_antes'), fcn=gv('fc_nadir'), fcb=gv('fc_apos'), fcvar=gv('fc_var'), fcpct=gv('fc_pct'), fcrec=gv('fc_rec');
+  const sa=gv('spo2_antes'), sn=gv('spo2_nadir'), sb=gv('spo2_apos'), svar=gv('spo2_var'), spct=gv('spo2_pct'), srec=gv('spo2_rec');
+  const paa=gv('pa_antes'), pab=gv('pa_apos'), pavar=gv('pa_var'), papct=gv('pa_pct');
+  const bfaa=gv('bfa_antes'), bfab=gv('bfa_apos'), bfavar=gv('bfa_var'), bfarec=gv('bfa_rec');
+  const bpea=gv('bpe_antes'), bpeb=gv('bpe_apos'), bpevar=gv('bpe_var'), bperec=gv('bpe_rec');
+
+  const distPerc  = gv('dist_perc');
+  const distPrev  = gv('dist_prev');
+  const pctPrev   = gv('pct_prev');
+  const nParadas  = gv('n_paradas');
+  const tParadas  = gv('t_paradas');
+  const motivoP   = gv('motivo_parada');
+  const obs       = gv('obs_clinicas');
+
+  const pctNum    = parseFloat(pctPrev);
+  const spo2Drop  = parseFloat(sa) - parseFloat(sn);
+
+  // ── Classification labels ──
+  const desCls   = dVal === 'preservada' ? 'ok' : dVal === 'grave' ? 'danger' : 'warn';
+  const oxCls    = oVal === 'sem' ? 'ok' : 'danger';
+
+  const desTextoMap = {
+    preservada: 'Capacidade funcional ao exercício preservada (≥ 80% da distância prevista)',
+    leve:       'Redução leve da capacidade funcional ao exercício (60–79% da distância prevista)',
+    moderada:   'Redução moderada da capacidade funcional ao exercício (40–59% da distância prevista)',
+    grave:      'Redução grave da capacidade funcional ao exercício (< 40% da distância prevista)',
+  };
+  const oxTextoMap = {
+    sem: 'Sem dessaturação significativa ao esforço — queda de SpO₂ < 4 pontos percentuais. Resposta oxigêmica dentro dos limites aceitáveis pela ATS/ERS.',
+    com: 'Dessaturação induzida pelo esforço (DIE) — queda de SpO₂ ≥ 4 pontos percentuais durante o teste (critério ATS/ERS 2002 positivo), indicando comprometimento da troca gasosa durante exercício submáximo.',
+  };
+
+  // ── Interpretive paragraph (built from data) ──
+  function buildInterpretacao() {
+    let p = '';
+
+    // Distance
+    if (!isNaN(pctNum) && distPerc !== '—' && distPrev !== '—') {
+      if (pctNum >= 80)
+        p += `O paciente percorreu <strong>${distPerc} m</strong>, o que corresponde a <strong>${pctPrev}</strong> da distância de referência prevista de ${distPrev} m (equação de Enright &amp; Sherrill, 1998), caracterizando <strong>capacidade funcional ao exercício preservada</strong>. `;
+      else if (pctNum >= 60)
+        p += `O paciente percorreu <strong>${distPerc} m</strong>, equivalente a <strong>${pctPrev}</strong> da distância prevista (${distPrev} m — Enright &amp; Sherrill, 1998), evidenciando <strong>redução leve da capacidade funcional ao exercício</strong>. A literatura indica que déficits de 20–40% da distância prevista refletem limitação funcional clinicamente relevante e estão associados a maior risco de hospitalização e mortalidade em cardiopatas e pneumopatas (Enright et al., 2003). `;
+      else if (pctNum >= 40)
+        p += `O paciente percorreu <strong>${distPerc} m</strong>, equivalente a <strong>${pctPrev}</strong> da distância prevista (${distPrev} m — Enright &amp; Sherrill, 1998), evidenciando <strong>redução moderada da capacidade funcional ao exercício</strong>, com impacto funcional expressivo na realização de atividades de vida diária. `;
+      else
+        p += `O paciente percorreu <strong>${distPerc} m</strong>, equivalente a <strong>${pctPrev}</strong> da distância prevista (${distPrev} m — Enright &amp; Sherrill, 1998), evidenciando <strong>redução grave da capacidade funcional ao exercício</strong>, com comprometimento severo da mobilidade funcional. `;
+    } else if (distPerc !== '—') {
+      p += `O paciente percorreu <strong>${distPerc} m</strong> no TC6M. `;
+    }
+
+    // FC response
+    if (fca !== '—' && fcb !== '—') {
+      p += `A frequência cardíaca passou de <strong>${fca} bpm</strong> em repouso para <strong>${fcb} bpm</strong> ao término do teste (variação: ${fcvar}, ${fcpct})`;
+      if (fcrec !== '—') p += `, com recuperação para <strong>${fcrec} bpm</strong> no primeiro minuto`;
+      p += '. ';
+    }
+
+    // SpO2
+    if (sa !== '—' && sn !== '—' && !isNaN(spo2Drop)) {
+      if (spo2Drop >= 4) {
+        p += `Verificou-se <strong>dessaturação de oxigênio induzida pelo esforço</strong>, com SpO₂ de ${sa}% em repouso atingindo nadir de <strong>${sn}%</strong> durante o teste (queda de <strong>${spo2Drop.toFixed(1)} pp</strong>). A queda ≥ 4 pp configura critério de dessaturação ao esforço segundo a ATS (2002), podendo indicar necessidade de oxigenoterapia suplementar durante o exercício. `;
+      } else {
+        p += `A SpO₂ manteve-se estável, com variação de ${sa}% (repouso) para nadir de <strong>${sn}%</strong> (queda de ${spo2Drop.toFixed(1)} pp), sem dessaturação clinicamente significativa. `;
+      }
+      if (srec !== '—') p += `Na recuperação de 1 minuto, SpO₂ retornou a ${srec}%. `;
+    }
+
+    // Paradas
+    if (nParadas !== '—' && nParadas !== '0') {
+      p += `Foram registradas <strong>${nParadas} parada(s)</strong> durante o teste`;
+      if (tParadas !== '—' && tParadas !== '') p += `, com tempo total acumulado de pausa de <strong>${tParadas}</strong>`;
+      if (motivoP !== '—' && motivoP !== '') p += `, motivadas por: ${motivoP}`;
+      p += '. ';
+    }
+
+    // Borg
+    if (bfaa !== '—' && bfab !== '—') {
+      p += `A percepção de esforço pela Escala de Borg modificada foi de <strong>${bfaa}</strong> (repouso) para <strong>${bfab}</strong> (pós-esforço) para dispneia (Δ ${bfavar})`;
+      if (bpea !== '—' && bpeb !== '—') p += ` e de <strong>${bpea}</strong> para <strong>${bpeb}</strong> para fadiga de membros inferiores (Δ ${bpevar})`;
+      p += '. ';
+    }
+
+    // PA
+    if (paa !== '—' && pab !== '—') {
+      p += `A pressão arterial sistêmica foi de <strong>${paa} mmHg</strong> no repouso e <strong>${pab} mmHg</strong> ao término do esforço (variação sistólica: ${papct}). `;
+    }
+
+    // Obs
+    if (obs !== '—' && obs !== '') p += `<br><br><em><strong>Obs.:</strong> ${obs}</em>`;
+
+    return p || 'Dados insuficientes para interpretação automática. Preencha os parâmetros do teste.';
+  }
+
+  // ── MCID note ──
+  function mcidNote() {
+    const d = parseFloat(distPerc);
+    if (isNaN(d)) return '';
+    return `<p style="font-size:12px;color:#6b7280;margin-top:8px"><strong>MCID (Diferença Mínima Clinicamente Importante):</strong> A resposta ao tratamento é considerada clinicamente relevante quando o TC6M apresenta ganho ≥ 25–30 m em relação à avaliação prévia (Holland et al., 2014; ATS/ERS).</p>`;
+  }
+
+  document.getElementById('reportOut').innerHTML = `
+    <div class="r-inst">DBM Fisioterapia Ltda</div>
+    <div style="font-size:11px;color:#9ca3af;text-align:center">CNPJ: 59.240.405/0001-40 &nbsp;·&nbsp; Fisioterapia Respiratória e Cardiológica</div>
+    <div class="r-title">Laudo — Teste de Caminhada de 6 Minutos (TC6M)</div>
+    <div class="r-date">Data do exame: ${dataExame} &nbsp;·&nbsp; Protocolo: ATS Guidelines 2002</div>
+    <hr class="r-hr">
+
+    <div class="r-sec">1. Identificação do paciente</div>
+    <div class="r-row"><span>Nome</span><span>${nome}</span></div>
+    <div class="r-row"><span>Nascimento</span><span>${dnasc}</span></div>
+    <div class="r-row"><span>Idade</span><span>${idade} anos</span></div>
+    <div class="r-row"><span>Sexo</span><span>${sexo}</span></div>
+    <div class="r-row"><span>Peso</span><span>${peso} kg</span></div>
+    <div class="r-row"><span>Altura</span><span>${alt} m</span></div>
+    <div class="r-row"><span>IMC</span><span>${imc} kg/m²</span></div>
+    <div class="r-row"><span>Diagnóstico clínico</span><span>${diag}</span></div>
+
+    <div class="r-sec">2. Parâmetros fisiológicos e percepção de esforço</div>
+    <div style="overflow-x:auto">
+      <table class="r-table">
+        <thead><tr>
+          <th style="min-width:80px;text-align:left;padding-left:6px">Variável</th>
+          <th>Repouso</th><th>Nadir</th><th>Após</th>
+          <th>Var. abs.</th><th>Var. %</th><th>Recup.</th>
+        </tr></thead>
+        <tbody>
+          <tr><td>FC (bpm)</td><td>${fca}</td><td>${fcn}</td><td>${fcb}</td><td>${fcvar}</td><td>${fcpct}</td><td>${fcrec}</td></tr>
+          <tr><td>SpO₂ (%)</td><td>${sa}</td><td>${sn}</td><td>${sb}</td><td>${svar}</td><td>${spct}</td><td>${srec}</td></tr>
+          <tr><td>PA (mmHg)</td><td>${paa}</td><td>—</td><td>${pab}</td><td>${pavar}</td><td>${papct}</td><td>—</td></tr>
+          <tr><td>Borg dispneia</td><td>${bfaa}</td><td>—</td><td>${bfab}</td><td>${bfavar}</td><td>—</td><td>${bfarec}</td></tr>
+          <tr><td>Borg pernas</td><td>${bpea}</td><td>—</td><td>${bpeb}</td><td>${bpevar}</td><td>—</td><td>${bperec}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="r-sec">3. Desempenho funcional</div>
+    <div class="r-row"><span>Distância percorrida</span><span><strong>${distPerc} m</strong></span></div>
+    <div class="r-row"><span>Distância prevista (Enright &amp; Sherrill, 1998)</span><span>${distPrev} m</span></div>
+    <div class="r-row"><span>% do previsto alcançado</span><span><strong>${pctPrev}</strong></span></div>
+    <div class="r-row"><span>N° de paradas</span><span>${nParadas}</span></div>
+    ${tParadas !== '—' ? `<div class="r-row"><span>Tempo total parado</span><span>${tParadas}</span></div>` : ''}
+    ${motivoP !== '—' ? `<div class="r-row"><span>Motivo da parada</span><span>${motivoP}</span></div>` : ''}
+
+    <div class="r-sec">4. Conclusão e impressão diagnóstica</div>
+
+    <div class="cb ${desCls}">
+      <h4>Análise de desempenho</h4>
+      <p>${desTextoMap[dVal] || '—'}</p>
+    </div>
+
+    <div class="cb ${oxCls}">
+      <h4>Resposta oxigêmica ao esforço</h4>
+      <p>${oxTextoMap[oVal] || '—'}</p>
+    </div>
+
+    <div class="cb neutral">
+      <h4>Interpretação clínica</h4>
+      <p>${buildInterpretacao()}</p>
+      ${mcidNote()}
+    </div>
+
+    <div class="cb neutral" style="margin-top:10px">
+      <h4>Metodologia e referências normativas</h4>
+      <p style="font-size:12px;color:#6b7280;line-height:1.65">
+        Teste conduzido conforme protocolo da <em>American Thoracic Society (ATS Statement, Am J Respir Crit Care Med, 2002)</em>: corredor plano de 30 m, cones demarcadores, estímulos padronizados a cada minuto, sem encorajamento adicional. Equipamentos: oxímetro de pulso, esfigmomanômetro, cronômetro calibrado.<br><br>
+        <strong>Equação de referência:</strong> Enright &amp; Sherrill (1998) — Homens: 7,57×Alt(cm) − 5,02×Idade − 1,76×Peso − 309 m; Mulheres: 2,11×Alt(cm) − 2,29×Peso − 5,78×Idade + 667 m.<br><br>
+        <strong>Classificação funcional:</strong> ≥ 80% = preservada; 60–79% = redução leve; 40–59% = moderada; &lt; 40% = grave (Enright et al., 2003).<br><br>
+        <strong>Dessaturação ao esforço:</strong> queda de SpO₂ ≥ 4 pp durante o teste (ATS/ERS, 2002).<br><br>
+        <strong>MCID:</strong> ganho ≥ 25–30 m considera-se clinicamente relevante (Holland et al., 2014; Singh et al., 2014).
+      </p>
+    </div>
+
+    <div class="sig-block">
+      <div class="sig-line"></div>
+      <div class="sig-name">Daniel Brandão Martins &nbsp;·&nbsp; CREFITO 2: 125597-F</div>
+      <div class="sig-name" style="margin-top:3px">DBM Fisioterapia Ltda</div>
+    </div>
+    <div class="disclaimer">Este laudo destina-se exclusivamente a fins clínicos. Para diagnóstico definitivo, consulte o profissional responsável.</div>
+  `;
+}
+</script>
+</body>
+</html>
