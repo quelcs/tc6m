@@ -118,11 +118,20 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
 .sig-line{width:200px;border-bottom:1px solid #111827;margin:0 auto 6px;height:36px}
 .sig-name{font-size:12px;color:#6b7280}
 .disclaimer{font-size:10px;color:#d1d5db;text-align:center;margin-top:16px}
+.sig-canvas{border:1.5px solid #d1d5db;border-radius:10px;width:100%;touch-action:none;background:#fff}
+.saved-item{background:#fff;border:1px solid #e5e7eb;border-radius:10px;padding:12px 14px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center}
+.saved-item-name{font-size:14px;font-weight:500;color:#111827}
+.saved-item-date{font-size:12px;color:#9ca3af}
+.saved-actions{display:flex;gap:8px}
 @media print{
-  .topbar,.bnav,.no-print{display:none!important}
-  body{background:#fff}
-  .screen{display:block!important;padding:0}
-  .report-wrap{border:none;padding:0}
+  .timer-card,.topbar,.bnav,.no-print{display:none!important}
+  body{background:#fff;margin:0;padding:0}
+  .screen{display:none!important;padding:0;margin:0}
+  #s4{display:block!important}
+  .report-wrap{border:none;padding:0;margin:0}
+  .spacer{display:none!important}
+  *{page-break-inside:avoid}
+  .cb{page-break-inside:avoid}
 }
 </style>
 </head>
@@ -141,6 +150,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
   <button class="bnav-item" id="bn2" onclick="goStep(2)"><div class="bnav-dot"></div><span class="bnav-icon">📊</span><span>Resultados</span></button>
   <button class="bnav-item" id="bn3" onclick="goStep(3)"><div class="bnav-dot"></div><span class="bnav-icon">🩺</span><span>Conclusão</span></button>
   <button class="bnav-item" id="bn4" onclick="goStep(4)"><div class="bnav-dot"></div><span class="bnav-icon">📄</span><span>Laudo</span></button>
+  <button class="bnav-item" id="bn5" onclick="goStep(5)"><div class="bnav-dot"></div><span class="bnav-icon">🗂</span><span>Salvos</span></button>
 </nav>
 
 <!-- ══ TELA 1: Paciente ══ -->
@@ -443,9 +453,31 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
 <div class="screen" id="s4">
   <div class="btn-row no-print" style="margin-bottom:12px">
     <button class="btn btn-outline" onclick="goStep(3)">← Editar</button>
+    <button class="btn btn-success" onclick="saveTest()">💾 Salvar</button>
     <button class="btn btn-primary" onclick="window.print()">🖨 Imprimir</button>
   </div>
+  <div id="saveMsg" style="display:none;margin-bottom:10px" class="alert alert-ok">✅ Teste salvo com sucesso!</div>
+
+  <!-- Assinatura digital -->
+  <div class="card no-print">
+    <div class="card-label">Assinatura digital</div>
+    <canvas id="sigCanvas" class="sig-canvas" height="120"></canvas>
+    <div class="btn-row" style="margin-top:10px">
+      <button class="btn btn-outline" onclick="clearSig()" style="font-size:13px;padding:10px">🗑 Limpar</button>
+      <button class="btn btn-primary" onclick="applySig()" style="font-size:13px;padding:10px">✓ Aplicar ao laudo</button>
+    </div>
+  </div>
+
   <div class="report-wrap" id="reportOut"></div>
+  <div class="spacer"></div>
+</div>
+
+<!-- ══ TELA 6: Testes salvos ══ -->
+<div class="screen" id="s5">
+  <div class="card">
+    <div class="card-label">Testes salvos</div>
+    <div id="savedList"><div style="color:#9ca3af;font-size:14px;text-align:center;padding:20px">Nenhum teste salvo ainda.</div></div>
+  </div>
   <div class="spacer"></div>
 </div>
 
@@ -473,11 +505,168 @@ function goStep(n) {
     if (i < n) el.classList.add('done'); else el.classList.remove('done');
   });
   document.getElementById('bn' + n).classList.add('active');
-  document.getElementById('stepLabel').textContent = (n + 1) + ' de 5';
+  document.getElementById('stepLabel').textContent = n < 5 ? (n + 1) + ' de 5' : 'Salvos';
   curStep = n;
   if (n === 2) { recalcPrev(); calcResults(); }
   if (n === 3) autoSelectConclusoes();
+  if (n === 4) initSigCanvas();
+  if (n === 5) renderSaved();
   window.scrollTo(0, 0);
+}
+
+// ─── Signature canvas ─────────────────────────────────
+let sigDrawing = false;
+let sigHasData = false;
+function initSigCanvas() {
+  const canvas = document.getElementById('sigCanvas');
+  if (!canvas || canvas._init) return;
+  canvas._init = true;
+  const W = canvas.parentElement.clientWidth - 32;
+  canvas.width = W; canvas.height = 120;
+  const ctx = canvas.getContext('2d');
+  ctx.strokeStyle = '#1d4ed8'; ctx.lineWidth = 2.5;
+  ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+  function pos(e) {
+    const r = canvas.getBoundingClientRect();
+    const src = e.touches ? e.touches[0] : e;
+    return { x: (src.clientX - r.left) * (canvas.width / r.width),
+             y: (src.clientY - r.top) * (canvas.height / r.height) };
+  }
+  function start(e) { e.preventDefault(); sigDrawing = true; const p = pos(e); ctx.beginPath(); ctx.moveTo(p.x, p.y); }
+  function move(e)  { e.preventDefault(); if (!sigDrawing) return; const p = pos(e); ctx.lineTo(p.x, p.y); ctx.stroke(); sigHasData = true; }
+  function end(e)   { e.preventDefault(); sigDrawing = false; }
+  canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move); canvas.addEventListener('mouseup', end);
+  canvas.addEventListener('touchstart', start, {passive:false}); canvas.addEventListener('touchmove', move, {passive:false}); canvas.addEventListener('touchend', end);
+}
+function clearSig() {
+  const canvas = document.getElementById('sigCanvas');
+  const ctx = canvas.getContext('2d');
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  sigHasData = false;
+}
+function applySig() {
+  const canvas = document.getElementById('sigCanvas');
+  if (!sigHasData) { alert('Desenhe a assinatura primeiro.'); return; }
+  const dataUrl = canvas.toDataURL('image/png');
+  const sigImg = document.getElementById('reportSigImg');
+  if (sigImg) {
+    sigImg.src = dataUrl;
+    sigImg.style.display = 'block';
+    const sigLine = document.getElementById('reportSigLine');
+    if (sigLine) sigLine.style.display = 'none';
+  }
+  document.getElementById('saveMsg') && (document.getElementById('saveMsg').style.display = 'none');
+  alert('Assinatura aplicada ao laudo!');
+}
+
+// ─── Save / load tests ───────────────────────────────
+// ─── Supabase config ──────────────────────────────────
+const SB_URL = 'https://tbrvldlbrkmpmnqelkth.supabase.co';
+const SB_KEY = 'sb_publishable_Tj8S4ew70JLbEizTP2fPHA_641aBNjx';
+const FIELD_IDS = ['p_nome','p_dnasc','p_idade','p_sexo','p_peso','p_altura','p_imc','p_diag','p_data',
+  'fc_antes','fc_nadir','fc_apos','fc_var','fc_pct','fc_rec',
+  'spo2_antes','spo2_nadir','spo2_apos','spo2_var','spo2_pct','spo2_rec',
+  'pa_antes','pa_apos','pa_var','pa_pct',
+  'bfa_antes','bfa_apos','bfa_var','bfa_rec','bpe_antes','bpe_apos','bpe_var','bpe_rec',
+  'dist_perc','dist_prev','pct_prev','n_paradas','t_paradas','motivo_parada','obs_clinicas'];
+
+async function sbFetch(path, opts) {
+  const res = await fetch(SB_URL + path, {
+    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json', 'Prefer': 'return=representation' },
+    ...opts
+  });
+  return res.json();
+}
+
+function collectData() {
+  const row = { desempenho: dVal, oxigenio: oVal, laudo_html: document.getElementById('reportOut').innerHTML };
+  FIELD_IDS.forEach(id => {
+    const el = document.getElementById(id);
+    const col = id === 'p_nome' ? 'paciente_nome' : id === 'p_dnasc' ? 'paciente_dnasc'
+      : id === 'p_idade' ? 'paciente_idade' : id === 'p_sexo' ? 'paciente_sexo'
+      : id === 'p_peso' ? 'paciente_peso' : id === 'p_altura' ? 'paciente_altura'
+      : id === 'p_imc' ? 'paciente_imc' : id === 'p_diag' ? 'paciente_diag'
+      : id === 'p_data' ? 'data_exame' : id;
+    if (el) row[col] = el.value;
+  });
+  return row;
+}
+
+async function saveTest() {
+  const msg = document.getElementById('saveMsg');
+  msg.style.display = 'block';
+  msg.className = 'alert alert-warn';
+  msg.textContent = '⏳ Salvando...';
+  try {
+    const row = collectData();
+    const result = await sbFetch('/rest/v1/testes', { method: 'POST', body: JSON.stringify(row) });
+    if (result && result[0] && result[0].id) {
+      msg.className = 'alert alert-ok';
+      msg.textContent = '✅ Teste salvo com sucesso!';
+    } else {
+      msg.className = 'alert alert-danger';
+      msg.textContent = '❌ Erro ao salvar. Tente novamente.';
+    }
+  } catch(e) {
+    msg.className = 'alert alert-danger';
+    msg.textContent = '❌ Erro de conexão. Verifique a internet.';
+  }
+  setTimeout(() => msg.style.display = 'none', 4000);
+}
+
+async function renderSaved() {
+  const list = document.getElementById('savedList');
+  list.innerHTML = '<div style="color:#9ca3af;font-size:14px;text-align:center;padding:20px">⏳ Carregando...</div>';
+  try {
+    const data = await sbFetch('/rest/v1/testes?select=id,criado_em,paciente_nome,pct_prev&order=criado_em.desc');
+    if (!data || !data.length) {
+      list.innerHTML = '<div style="color:#9ca3af;font-size:14px;text-align:center;padding:20px">Nenhum teste salvo ainda.</div>';
+      return;
+    }
+    list.innerHTML = data.map(d => {
+      const dt = new Date(d.criado_em).toLocaleDateString('pt-BR') + ' ' +
+        new Date(d.criado_em).toLocaleTimeString('pt-BR', {hour:'2-digit',minute:'2-digit'});
+      return `<div class="saved-item">
+        <div><div class="saved-item-name">${d.paciente_nome || 'Sem nome'}</div>
+        <div class="saved-item-date">${dt} · ${d.pct_prev || '—'} do previsto</div></div>
+        <div class="saved-actions">
+          <button class="btn btn-outline" style="padding:8px 12px;font-size:12px" onclick="loadTest('${d.id}')">Abrir</button>
+          <button class="btn" style="padding:8px 12px;font-size:12px;background:#fef2f2;color:#991b1b;border:1px solid #fca5a5" onclick="deleteTest('${d.id}')">✕</button>
+        </div>
+      </div>`;
+    }).join('');
+  } catch(e) {
+    list.innerHTML = '<div style="color:#991b1b;font-size:14px;text-align:center;padding:20px">❌ Erro ao carregar. Verifique a internet.</div>';
+  }
+}
+
+async function loadTest(id) {
+  const list = document.getElementById('savedList');
+  list.innerHTML = '<div style="color:#9ca3af;font-size:14px;text-align:center;padding:20px">⏳ Carregando teste...</div>';
+  try {
+    const data = await sbFetch('/rest/v1/testes?id=eq.' + id + '&select=*');
+    if (!data || !data[0]) { alert('Erro ao carregar teste.'); return; }
+    const d = data[0];
+    const map = { paciente_nome:'p_nome', paciente_dnasc:'p_dnasc', paciente_idade:'p_idade',
+      paciente_sexo:'p_sexo', paciente_peso:'p_peso', paciente_altura:'p_altura',
+      paciente_imc:'p_imc', paciente_diag:'p_diag', data_exame:'p_data' };
+    FIELD_IDS.forEach(id2 => {
+      const col = Object.keys(map).find(k => map[k] === id2) || id2;
+      const el = document.getElementById(id2);
+      if (el && d[col] !== undefined && d[col] !== null) el.value = d[col];
+    });
+    dVal = d.desempenho; oVal = d.oxigenio;
+    if (d.laudo_html) document.getElementById('reportOut').innerHTML = d.laudo_html;
+    autoSelectConclusoes();
+    goStep(4);
+  } catch(e) { alert('Erro ao carregar teste.'); }
+}
+
+async function deleteTest(id) {
+  if (!confirm('Excluir este teste?')) return;
+  await sbFetch('/rest/v1/testes?id=eq.' + id, { method: 'DELETE' });
+  renderSaved();
 }
 
 // ─── Date mask dd/mm/aaaa ─────────────────────────────
@@ -688,17 +877,33 @@ function calcResults() {
 
 // ─── Auto-select conclusions ──────────────────────────
 function autoSelectConclusoes() {
+  // force all calcs fresh
+  calcIMC();
+  calcAge();
   // always recalc first so values are fresh
   recalcPrev();
   calcResults();
 
   const pctRaw = document.getElementById('pct_prev').value;
   const pct    = parseFloat(pctRaw);
-  if (!isNaN(pct)) autoSelDesempenho(pct);
+  if (!isNaN(pct)) {
+    autoSelDesempenho(pct);
+  } else {
+    // dist_perc não preenchida ainda — não pré-seleciona desempenho
+    // mas mantém qualquer seleção manual já feita
+  }
 
   const spo2a  = parseFloat(document.getElementById('spo2_antes').value);
   const spo2n  = parseFloat(document.getElementById('spo2_nadir').value);
-  if (!isNaN(spo2a) && !isNaN(spo2n)) autoSelOxigenio((spo2a - spo2n) >= 4 ? 'com' : 'sem');
+  const spo2b  = parseFloat(document.getElementById('spo2_apos').value);
+  // use nadir if available, otherwise use após vs antes
+  const spo2ref = !isNaN(spo2n) ? spo2n : (!isNaN(spo2b) ? spo2b : NaN);
+  if (!isNaN(spo2a) && !isNaN(spo2ref)) {
+    autoSelOxigenio((spo2a - spo2ref) >= 4 ? 'com' : 'sem');
+  } else if (!isNaN(spo2a)) {
+    // SpO2 repouso preenchido mas sem nadir/após — assume sem dessaturação
+    autoSelOxigenio('sem');
+  }
 }
 function autoSelDesempenho(pct) {
   const map = { preservada:'od_pres', leve:'od_leve', moderada:'od_mod', grave:'od_grav' };
@@ -1035,11 +1240,12 @@ function buildReport() {
     </div>
 
     <div class="sig-block">
-      <div class="sig-line"></div>
+      <img id="reportSigImg" src="" alt="Assinatura" style="display:none;width:200px;height:60px;object-fit:contain;margin:0 auto 4px;display:none">
+      <div id="reportSigLine" class="sig-line"></div>
       <div class="sig-name">Daniel Brandão Martins &nbsp;·&nbsp; CREFITO 2: 125597-F</div>
       <div class="sig-name" style="margin-top:3px">DBM Fisioterapia Ltda</div>
     </div>
-    <div class="disclaimer">Este laudo destina-se exclusivamente a fins clínicos. Para diagnóstico definitivo, consulte o profissional responsável.</div>
+    <div class="disclaimer" style="page-break-after:avoid">Este laudo destina-se exclusivamente a fins clínicos. Para diagnóstico definitivo, consulte o profissional responsável.</div>
   `;
 }
 </script>
