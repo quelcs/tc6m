@@ -8,16 +8,16 @@
 *{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
 html{font-size:16px}
 body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#111827;min-height:100vh;overscroll-behavior:none}
-.bnav{position:sticky;bottom:0;left:0;right:0;background:#fff;border-top:1px solid #e5e7eb;display:flex;z-index:50}
-.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:10px 4px 12px;gap:3px;cursor:pointer;font-size:10px;color:#9ca3af;font-weight:500;border:none;background:none}
+.bnav{position:sticky;top:0;left:0;right:0;background:#fff;border-bottom:1px solid #e5e7eb;display:flex;z-index:50}
+.bnav-item{flex:1;display:flex;flex-direction:column;align-items:center;padding:8px 4px 8px;gap:2px;cursor:pointer;font-size:10px;color:#9ca3af;font-weight:500;border:none;background:none}
 .bnav-item.active{color:#1d4ed8}
 .bnav-dot{width:6px;height:6px;border-radius:50%;background:#e5e7eb;margin-bottom:1px}
 .bnav-item.done .bnav-dot{background:#16a34a}
 .bnav-item.active .bnav-dot{background:#1d4ed8}
 .bnav-icon{font-size:20px;line-height:1}
-.screen{display:none;padding:16px 16px 0}
+.screen{display:none;padding:16px 16px 24px}
 .screen.active{display:block}
-.topbar{display:flex;align-items:center;gap:10px;padding:14px 16px 10px;background:#fff;border-bottom:1px solid #e5e7eb;position:sticky;top:0;z-index:40}
+.topbar{display:none}
 .topbar-title{font-size:16px;font-weight:600;color:#111827;flex:1}
 .topbar-step{font-size:12px;color:#6b7280;background:#f3f4f6;padding:3px 10px;border-radius:99px}
 .card{background:#fff;border-radius:14px;border:1px solid #e5e7eb;padding:16px;margin-bottom:14px}
@@ -133,6 +133,15 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
   <span class="topbar-title">TC6M — DBM Fisioterapia</span>
   <span class="topbar-step" id="stepLabel">1 de 5</span>
 </div>
+
+<!-- ══ TOP NAV ══ -->
+<nav class="bnav no-print">
+  <button class="bnav-item active" id="bn0" onclick="goStep(0)"><div class="bnav-dot"></div><span class="bnav-icon">👤</span><span>Paciente</span></button>
+  <button class="bnav-item" id="bn1" onclick="goStep(1)"><div class="bnav-dot"></div><span class="bnav-icon">⏱</span><span>Teste</span></button>
+  <button class="bnav-item" id="bn2" onclick="goStep(2)"><div class="bnav-dot"></div><span class="bnav-icon">📊</span><span>Resultados</span></button>
+  <button class="bnav-item" id="bn3" onclick="goStep(3)"><div class="bnav-dot"></div><span class="bnav-icon">🩺</span><span>Conclusão</span></button>
+  <button class="bnav-item" id="bn4" onclick="goStep(4)"><div class="bnav-dot"></div><span class="bnav-icon">📄</span><span>Laudo</span></button>
+</nav>
 
 <!-- ══ TELA 1: Paciente ══ -->
 <div class="screen active" id="s0">
@@ -440,14 +449,6 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
   <div class="spacer"></div>
 </div>
 
-<!-- ══ BOTTOM NAV ══ -->
-<nav class="bnav no-print">
-  <button class="bnav-item active" id="bn0" onclick="goStep(0)"><div class="bnav-dot"></div><span class="bnav-icon">👤</span><span>Paciente</span></button>
-  <button class="bnav-item" id="bn1" onclick="goStep(1)"><div class="bnav-dot"></div><span class="bnav-icon">⏱</span><span>Teste</span></button>
-  <button class="bnav-item" id="bn2" onclick="goStep(2)"><div class="bnav-dot"></div><span class="bnav-icon">📊</span><span>Resultados</span></button>
-  <button class="bnav-item" id="bn3" onclick="goStep(3)"><div class="bnav-dot"></div><span class="bnav-icon">🩺</span><span>Conclusão</span></button>
-  <button class="bnav-item" id="bn4" onclick="goStep(4)"><div class="bnav-dot"></div><span class="bnav-icon">📄</span><span>Laudo</span></button>
-</nav>
 
 <script>
 // ─── State ───────────────────────────────────────────
