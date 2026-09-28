@@ -132,7 +132,22 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
   .spacer{display:none!important}
   *{page-break-inside:avoid}
   .cb{page-break-inside:avoid}
+  /* hide Netlify badge */
+  #netlify-identity-widget,
+  [data-netlify-identity-menu],
+  .netlify-identity-button,
+  iframe[src*="netlify"],
+  div[style*="netlify"],
+  #netlify-dev-indicator,
+  .widget--netlify,
+  [class*="netlify"],
+  [id*="netlify"]{display:none!important;visibility:hidden!important}
 }
+/* also hide on screen to avoid overlap */
+#netlify-dev-indicator,
+.widget--netlify,
+[class*="netlify-badge"],
+[id*="netlify-badge"]{display:none!important}
 </style>
 </head>
 <body>
@@ -454,7 +469,7 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
   <div class="btn-row no-print" style="margin-bottom:12px">
     <button class="btn btn-outline" onclick="goStep(3)">← Editar</button>
     <button class="btn btn-success" onclick="saveTest()">💾 Salvar</button>
-    <button class="btn btn-primary" onclick="window.print()">🖨 Imprimir</button>
+    <button class="btn btn-primary" onclick="printLaudo()">🖨 Imprimir</button>
   </div>
   <div id="saveMsg" style="display:none;margin-bottom:10px" class="alert alert-ok">✅ Teste salvo com sucesso!</div>
 
@@ -1025,6 +1040,28 @@ function addLog(txt) {
   const div = document.createElement('div');
   div.className = 'timer-log-item'; div.textContent = txt;
   log.appendChild(div); log.scrollTop = log.scrollHeight;
+}
+
+function printLaudo() {
+  // hide all iframes (Netlify badge is injected as iframe)
+  const iframes = document.querySelectorAll('iframe');
+  iframes.forEach(f => { f.dataset.wasVisible = f.style.display; f.style.display = 'none'; });
+  // hide fixed/sticky elements that might overlap
+  const fixed = document.querySelectorAll('*');
+  const hidden = [];
+  fixed.forEach(el => {
+    const s = window.getComputedStyle(el);
+    if ((s.position === 'fixed' || s.position === 'sticky') && !el.closest('#s4')) {
+      hidden.push({el, d: el.style.display});
+      el.style.display = 'none';
+    }
+  });
+  window.print();
+  // restore after print dialog closes
+  setTimeout(() => {
+    iframes.forEach(f => { f.style.display = f.dataset.wasVisible || ''; });
+    hidden.forEach(({el, d}) => { el.style.display = d; });
+  }, 1000);
 }
 
 function beep() {
