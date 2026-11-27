@@ -466,10 +466,12 @@ body{font-family:system-ui,-apple-system,sans-serif;background:#f2f4f7;color:#11
 
 <!-- ══ TELA 5: Laudo ══ -->
 <div class="screen" id="s4">
-  <div class="btn-row no-print" style="margin-bottom:12px">
+  <div class="btn-row no-print" style="margin-bottom:8px">
     <button class="btn btn-outline" onclick="goStep(3)">← Editar</button>
     <button class="btn btn-success" onclick="saveTest()">💾 Salvar</button>
-    <button class="btn btn-primary" onclick="printLaudo()">🖨 Imprimir</button>
+  </div>
+  <div class="btn-row no-print" style="margin-bottom:12px">
+    <button class="btn btn-primary" onclick="compartilharLaudo()">📤 Compartilhar / Imprimir</button>
   </div>
   <div id="saveMsg" style="display:none;margin-bottom:10px" class="alert alert-ok">✅ Teste salvo com sucesso!</div>
 
@@ -563,21 +565,19 @@ function applySig() {
   const canvas = document.getElementById('sigCanvas');
   if (!sigHasData) { alert('Desenhe a assinatura primeiro.'); return; }
   const dataUrl = canvas.toDataURL('image/png');
-  const sigImg = document.getElementById('reportSigImg');
-  if (sigImg) {
-    sigImg.src = dataUrl;
-    sigImg.style.display = 'block';
-    const sigLine = document.getElementById('reportSigLine');
-    if (sigLine) sigLine.style.display = 'none';
-  }
-  document.getElementById('saveMsg') && (document.getElementById('saveMsg').style.display = 'none');
-  alert('Assinatura aplicada ao laudo!');
+  // try inside reportOut first (loaded test), then direct IDs
+  const reportOut = document.getElementById('reportOut');
+  const sigImg  = reportOut ? reportOut.querySelector('#reportSigImg')  : document.getElementById('reportSigImg');
+  const sigLine = reportOut ? reportOut.querySelector('#reportSigLine') : document.getElementById('reportSigLine');
+  if (sigImg)  { sigImg.src = dataUrl; sigImg.style.display = 'block'; }
+  if (sigLine) { sigLine.style.display = 'none'; }
+  alert('Assinatura aplicada! Clique em 💾 Salvar para guardar com a assinatura.');
 }
 
 // ─── Save / load tests ───────────────────────────────
 // ─── Supabase config ──────────────────────────────────
 const SB_URL = 'https://tbrvldlbrkmpmnqelkth.supabase.co';
-const SB_KEY = 'sb_publishable_Tj8S4ew70JLbEizTP2fPHA_641aBNjx';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRicnZsZGxicmttcG1ucWVsa3RoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1NTIyMzAsImV4cCI6MjEwNjEyODIzMH0.s2Hmknewpi95xGcpyIRxv1dj-cH4kelCmLWfojekQhA';
 const FIELD_IDS = ['p_nome','p_dnasc','p_idade','p_sexo','p_peso','p_altura','p_imc','p_diag','p_data',
   'fc_antes','fc_nadir','fc_apos','fc_var','fc_pct','fc_rec',
   'spo2_antes','spo2_nadir','spo2_apos','spo2_var','spo2_pct','spo2_rec',
@@ -587,11 +587,15 @@ const FIELD_IDS = ['p_nome','p_dnasc','p_idade','p_sexo','p_peso','p_altura','p_
 
 async function sbFetch(path, opts) {
   const res = await fetch(SB_URL + path, {
-    headers: { 'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
-      'Content-Type': 'application/json', 'Prefer': 'return=representation' },
-    ...opts
+    headers: {
+      'apikey': SB_KEY, 'Authorization': 'Bearer ' + SB_KEY,
+      'Content-Type': 'application/json', 'Prefer': 'return=representation'
+    }, ...opts
   });
-  return res.json();
+  if (res.status === 204 || res.headers.get('content-length') === '0') return [];
+  const text = await res.text();
+  if (!text) return [];
+  try { return JSON.parse(text); } catch(e) { return []; }
 }
 
 function collectData() {
@@ -616,18 +620,13 @@ async function saveTest() {
   try {
     const row = collectData();
     const result = await sbFetch('/rest/v1/testes', { method: 'POST', body: JSON.stringify(row) });
-    if (result && result[0] && result[0].id) {
-      msg.className = 'alert alert-ok';
-      msg.textContent = '✅ Teste salvo com sucesso!';
-    } else {
-      msg.className = 'alert alert-danger';
-      msg.textContent = '❌ Erro ao salvar. Tente novamente.';
-    }
+    msg.className = 'alert alert-ok';
+    msg.textContent = '✅ Teste salvo com sucesso!';
   } catch(e) {
     msg.className = 'alert alert-danger';
-    msg.textContent = '❌ Erro de conexão. Verifique a internet.';
+    msg.textContent = '❌ Erro: ' + e.message;
   }
-  setTimeout(() => msg.style.display = 'none', 4000);
+  setTimeout(() => msg.style.display = 'none', 5000);
 }
 
 async function renderSaved() {
@@ -1042,27 +1041,79 @@ function addLog(txt) {
   log.appendChild(div); log.scrollTop = log.scrollHeight;
 }
 
-function printLaudo() {
-  // hide all iframes (Netlify badge is injected as iframe)
-  const iframes = document.querySelectorAll('iframe');
-  iframes.forEach(f => { f.dataset.wasVisible = f.style.display; f.style.display = 'none'; });
-  // hide fixed/sticky elements that might overlap
-  const fixed = document.querySelectorAll('*');
-  const hidden = [];
-  fixed.forEach(el => {
-    const s = window.getComputedStyle(el);
-    if ((s.position === 'fixed' || s.position === 'sticky') && !el.closest('#s4')) {
-      hidden.push({el, d: el.style.display});
-      el.style.display = 'none';
-    }
-  });
-  window.print();
-  // restore after print dialog closes
-  setTimeout(() => {
-    iframes.forEach(f => { f.style.display = f.dataset.wasVisible || ''; });
-    hidden.forEach(({el, d}) => { el.style.display = d; });
-  }, 1000);
+function getLaudoHTML() {
+  const conteudo = document.getElementById('reportOut').innerHTML;
+  const paciente = (document.getElementById('p_nome').value || 'laudo').replace(/\s+/g,'-').toLowerCase();
+  const data = (document.getElementById('p_data').value || '').replace(/\//g,'-');
+  const css = `*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;color:#111827;padding:24px;max-width:720px;margin:0 auto}
+.r-inst{font-size:13px;font-weight:600;color:#374151;text-align:center}
+.r-title{font-size:15px;font-weight:700;color:#111827;text-align:center;margin:4px 0 2px}
+.r-date{font-size:12px;color:#9ca3af;text-align:center;margin-bottom:16px}
+.r-hr{border:none;border-top:2px solid #1d4ed8;margin-bottom:16px}
+.r-sec{font-size:10px;font-weight:700;color:#1d4ed8;letter-spacing:.8px;text-transform:uppercase;border-bottom:1px solid #e5e7eb;padding-bottom:6px;margin-bottom:10px;margin-top:18px}
+.r-row{display:flex;justify-content:space-between;font-size:13px;padding:5px 0;border-bottom:1px solid #f3f4f6;gap:8px}
+.r-row span:first-child{color:#6b7280;flex-shrink:0}
+.r-row span:last-child{font-weight:500;color:#111827;text-align:right}
+.r-table{width:100%;border-collapse:collapse;font-size:11px;margin-bottom:8px}
+.r-table th{background:#f9fafb;padding:5px 3px;text-align:center;border:1px solid #e5e7eb;font-weight:600;color:#6b7280;font-size:10px}
+.r-table td{padding:5px 3px;border:1px solid #e5e7eb;text-align:center;color:#111827}
+.r-table td:first-child{text-align:left;font-weight:500;padding-left:6px}
+.cb{border-radius:10px;padding:12px 14px;margin-bottom:10px;page-break-inside:avoid}
+.cb h4{font-size:11px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;margin-bottom:6px}
+.cb p{font-size:13px;line-height:1.65}
+.cb.ok{background:#f0fdf4;border:1px solid #bbf7d0}.cb.ok h4{color:#15803d}.cb.ok p{color:#14532d}
+.cb.warn{background:#fffbeb;border:1px solid #fde68a}.cb.warn h4{color:#92400e}.cb.warn p{color:#78350f}
+.cb.danger{background:#fef2f2;border:1px solid #fecaca}.cb.danger h4{color:#991b1b}.cb.danger p{color:#7f1d1d}
+.cb.neutral{background:#f9fafb;border:1px solid #e5e7eb}.cb.neutral h4{color:#374151}.cb.neutral p{color:#1f2937;font-size:12px}
+.sig-block{margin-top:32px;text-align:center}
+.sig-line{width:200px;border-bottom:1px solid #111827;margin:0 auto 6px;height:36px}
+.sig-name{font-size:12px;color:#6b7280}
+.disclaimer{font-size:10px;color:#d1d5db;text-align:center;margin-top:16px}
+@media print{body{padding:12px}*{page-break-inside:avoid}}`;
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+<title>Laudo TC6M</title><style>${css}</style></head><body>${conteudo}</body></html>`;
+  return { html, paciente, data };
 }
+
+async function compartilharLaudo() {
+  const { html, paciente, data } = getLaudoHTML();
+  const nomeArq = 'laudo-tc6m-' + paciente + (data ? '-' + data : '') + '.html';
+  const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+
+  // Tenta Web Share API (funciona no iOS Safari PWA)
+  if (navigator.share) {
+    try {
+      const file = new File([blob], nomeArq, { type: 'text/html' });
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          title: 'Laudo TC6M — ' + (document.getElementById('p_nome').value || 'Paciente'),
+          files: [file]
+        });
+        return;
+      }
+      // Share sem arquivo — compartilha só o texto do laudo
+      await navigator.share({
+        title: 'Laudo TC6M',
+        text: document.getElementById('reportOut').innerText
+      });
+      return;
+    } catch(e) {
+      if (e.name === 'AbortError') return; // usuário cancelou
+    }
+  }
+
+  // Fallback: download direto
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = nomeArq;
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1500);
+}
+
+function printLaudo() { compartilharLaudo(); }
 
 function beep() {
   try {
