@@ -1076,41 +1076,40 @@ body{font-family:system-ui,-apple-system,sans-serif;color:#111827;padding:24px;m
   return { html, paciente, data };
 }
 
-async function compartilharLaudo() {
-  const { html, paciente, data } = getLaudoHTML();
-  const nomeArq = 'laudo-tc6m-' + paciente + (data ? '-' + data : '') + '.html';
+function compartilharLaudo() {
+  const { html } = getLaudoHTML();
   const blob = new Blob([html], { type: 'text/html;charset=utf-8' });
+  const url  = URL.createObjectURL(blob);
 
-  // Tenta Web Share API (funciona no iOS Safari PWA)
-  if (navigator.share) {
-    try {
-      const file = new File([blob], nomeArq, { type: 'text/html' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          title: 'Laudo TC6M — ' + (document.getElementById('p_nome').value || 'Paciente'),
-          files: [file]
-        });
-        return;
-      }
-      // Share sem arquivo — compartilha só o texto do laudo
-      await navigator.share({
-        title: 'Laudo TC6M',
-        text: document.getElementById('reportOut').innerText
-      });
-      return;
-    } catch(e) {
-      if (e.name === 'AbortError') return; // usuário cancelou
+  // Detecta modo PWA (standalone = salvo na tela inicial)
+  const isPWA = window.navigator.standalone === true;
+
+  if (isPWA) {
+    // No modo PWA abre um link <a target="_blank"> que força abertura no Safari
+    // onde o botão de compartilhar/imprimir nativo está disponível
+    const a = document.createElement('a');
+    a.href = url;
+    a.target = '_blank';
+    a.rel = 'noopener';
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 2000);
+  } else {
+    // No Safari normal abre nova aba e dispara print
+    const win = window.open(url, '_blank');
+    if (win) {
+      win.focus();
+      setTimeout(() => win.print(), 1000);
+    } else {
+      // Fallback download
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'laudo-tc6m.html';
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1500);
     }
   }
-
-  // Fallback: download direto
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = nomeArq;
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { URL.revokeObjectURL(url); document.body.removeChild(a); }, 1500);
 }
 
 function printLaudo() { compartilharLaudo(); }
