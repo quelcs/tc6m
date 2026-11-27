@@ -1072,7 +1072,7 @@ body{font-family:system-ui,-apple-system,sans-serif;color:#111827;padding:24px;m
 .disclaimer{font-size:10px;color:#d1d5db;text-align:center;margin-top:16px}
 @media print{body{padding:12px}*{page-break-inside:avoid}}`;
   const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
-<title>Laudo TC6M</title><style>${css}</style></head><body>${conteudo}</body></html>`;
+<title>Laudo TC6M — ${paciente.replace(/-/g,' ')} — ${data.replace(/-/g,'/')}</title><style>${css}</style></head><body>${conteudo}</body></html>`;
   return { html, paciente, data };
 }
 
